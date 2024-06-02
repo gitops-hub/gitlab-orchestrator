@@ -1,3 +1,8 @@
+GO ?= go
+GOBIN := $(shell $(GO) env GOBIN)
+GOOS ?= $(shell go env GOOS)
+GOARCH ?= $(shell go env GOARCH)
+
 help:
 	@printf "Usage: make [target] [VARIABLE=value]\nTargets:\n"
 	@grep -E '^[a-zA-Z0-9_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -16,6 +21,9 @@ validate: ## Validate files with pre-commit hooks
 dependency: ## Dependency maintanance
 	@go get -u ./...
 	@go mod tidy
+	@go mod vendor
+	@go mod verify
+	@go get -d ./...
 
 .PHONY: fmt
 fmt: ## gofmt (reformat) package sources
@@ -27,8 +35,9 @@ test: ## Run unit tests
 
 .PHONY: build
 build: ## Compile packages and dependencies
-	@go build ./cmd/gitlab-membership
+	@go build
+	@go list -f '{{.Target}}'
 
-.PHONY: build
+.PHONY: run
 run: ## Run locally
-	@go run ./cmd/gitlab-membership
+	@go run main.go first
